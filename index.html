@@ -1,39 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Årshjul</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px;
-        }
-        svg {
-            width: 800px;
-            height: 800px;
-            transform: rotate(360deg); /* Roter hjulet for å få rad 1 øverst til høyre */
-            background-color: transparent;
-        }
-        .slice text {
-            font-size: 0.0025em;
-            fill: white;
-            text-anchor: middle;
-            dominant-baseline: middle;
-        }
-        .slice path {
-            transition: fill 0.3s ease; /* Legg til en myk overgang når fargen endres */
+        .edit-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <h1>Årshjul</h1>
     <svg id="yearWheel" viewBox="-1 -1 2 2" xmlns="http://www.w3.org/2000/svg"></svg>
 
+    <!-- Rediger-knapp -->
+    <button class="edit-button" onclick="promptPassword()">Rediger</button>
+
     <script>
+        // Data hentes fra lokal lagring
         const data = JSON.parse(localStorage.getItem('yearWheelData')) || [];
 
         function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
@@ -187,6 +181,16 @@
         }
 
         generateYearWheel();
+
+        // Funksjon for å be om passord
+        function promptPassword() {
+            const password = prompt("Skriv inn passord:");
+            if (password === "Sommer2021") {
+                window.location.href = "Tabell.html";
+            } else {
+                alert("Feil passord");
+            }
+        }
     </script>
 </body>
 </html>
