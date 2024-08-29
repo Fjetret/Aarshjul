@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Tabell: <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,32 +26,67 @@
             width: 60%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            font-size: 0.9em;
+            font-size: 0.9em; /* Mindre tekststørrelse for mer kompakt utseende */
             margin-left: auto;
             margin-right: auto;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 4px 6px;
+            padding: 4px 6px; /* Mindre polstring i cellene */
             text-align: center;
         }
         th {
             background-color: #f2f2f2;
         }
+        th.month {
+            width: 7%; /* Juster bredde for Måned-kolonnen */
+        }
+        th.type {
+            width: 7%; /* Juster bredde for Type-kolonnen */
+        }
+        th.activity {
+            width: 10%; /* Juster bredde for Aktiviteter-kolonnen */
+        }
+        th.link {
+            width: 10%; /* Juster bredde for Link-kolonnen */
+        }
+        th.move {
+            width: 5%; /* Juster bredde for Flytt opp/ned-kolonnene */
+        }
+        th.delete {
+            width: 5%; /* Juster bredde for Slett-kolonnen */
+        }
         select, input {
-            font-size: 0.9em;
-            padding: 2px 4px;
+            font-size: 0.9em; /* Mindre tekststørrelse i input-felt og dropdowns */
+            padding: 2px 4px; /* Mindre polstring i input-felt */
         }
         button {
-            padding: 3px 6px;
+            padding: 3px 6px; /* Mindre knapper for å gjøre tabellen mer kompakt */
             font-size: 0.85em;
             cursor: pointer;
         }
         .add-row-container {
-            margin-bottom: 10px;
+            margin-bottom: 10px; /* Litt mellomrom mellom knapp og tabell */
             width: 60%;
             display: flex;
             justify-content: space-between;
+        }
+        .add-row-container select.month-select {
+            width: 15%; /* Juster bredde for Måned dropdown */
+        }
+        .add-row-container select.type-select {
+            width: 15%; /* Juster bredde for Type dropdown */
+        }
+        .add-row-container input.activity-input {
+            width: 25%; /* Juster bredde for Aktiviteter input */
+        }
+        .add-row-container input.link-input {
+            width: 25%; /* Juster bredde for Link input */
+        }
+        .add-row-container button.add-btn {
+            width: 15%; /* Juster bredde for Legg til knapp */
+            font-size: 0.9em; /* Juster tekststørrelse for Legg til knapp */
+            padding: 5px 10px; /* Juster polstring for Legg til knapp */
         }
     </style>
 </head>
@@ -101,42 +136,30 @@
         </tbody>
     </table>
 
+    <!-- Tilbake til Årshjul-knapp -->
     <button class="back-button" onclick="window.location.href='index.html'">Årshjul</button>
 
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOBX0ZuWEXlUNzUF0gG5rPVGJh-NAggcmfs4pOW_LQh-Hi0m-KuV0jN-TQFsrWyb7bPw/exec';
+        let tableData = JSON.parse(localStorage.getItem('yearWheelData')) || [];
 
-        let tableData = [];
-
-        function fetchData() {
-            fetch(GOOGLE_SCRIPT_URL)
-                .then(response => response.json())
-                .then(data => {
-                    tableData = data.map(row => ({
-                        month: row[0],
-                        type: row[1],
-                        activity: row[2],
-                        link: row[3]
-                    }));
-                    renderTable();
-                })
-                .catch(error => console.error('Error:', error));
+        function saveData() {
+            localStorage.setItem('yearWheelData', JSON.stringify(tableData));
         }
 
-        function saveDataToGoogle(rowData) {
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(rowData),
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('Success:', data);
-                fetchData(); // Oppdater tabellen etter lagring
-            })
-            .catch(error => console.error('Error:', error));
+        function moveRow(index, direction) {
+            if (direction === 'up' && index > 0) {
+                [tableData[index], tableData[index - 1]] = [tableData[index - 1], tableData[index]];
+            } else if (direction === 'down' && index < tableData.length - 1) {
+                [tableData[index], tableData[index + 1]] = [tableData[index + 1], tableData[index]];
+            }
+            saveData();
+            renderTable();
+        }
+
+        function deleteRow(index) {
+            tableData.splice(index, 1);
+            saveData();
+            renderTable();
         }
 
         function addRow() {
@@ -146,12 +169,27 @@
             const link = document.getElementById('newLink').value;
 
             if (month && type && activity) {
-                const newRow = { month, type, activity, link };
-                saveDataToGoogle(newRow);
+                tableData.push({ month, type, activity, link });
+                sortTableData();
+                saveData();
                 clearNewRowInputs();
+                renderTable();
             } else {
                 alert('Vennligst fyll ut alle feltene.');
             }
+        }
+
+        function sortTableData() {
+            const monthOrder = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'];
+            tableData.sort((a, b) => {
+                const monthDiff = monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
+                if (monthDiff !== 0) return monthDiff;
+
+                // Sorter slik at "Vikar" kommer før "Kunde"
+                if (a.type === 'Vikar' && b.type === 'Kunde') return -1;
+                if (a.type === 'Kunde' && b.type === 'Vikar') return 1;
+                return 0;
+            });
         }
 
         function clearNewRowInputs() {
@@ -159,6 +197,11 @@
             document.getElementById('newType').value = '';
             document.getElementById('newActivity').value = '';
             document.getElementById('newLink').value = '';
+        }
+
+        function updateRow(index, field, value) {
+            tableData[index][field] = value;
+            saveData();
         }
 
         function renderTable() {
@@ -170,7 +213,38 @@
 
                 Object.keys(row).forEach((field) => {
                     const td = document.createElement('td');
-                    td.textContent = row[field];
+                    if (field === 'month' || field === 'type') {
+                        const select = document.createElement('select');
+                        select.value = row[field];
+                        select.onchange = (e) => updateRow(index, field, e.target.value);
+
+                        if (field === 'month') {
+                            const months = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'];
+                            months.forEach(month => {
+                                const option = document.createElement('option');
+                                option.value = month;
+                                option.textContent = month;
+                                select.appendChild(option);
+                            });
+                        } else if (field === 'type') {
+                            const types = ['Vikar', 'Kunde'];
+                            types.forEach(type => {
+                                const option = document.createElement('option');
+                                option.value = type;
+                                option.textContent = type;
+                                select.appendChild(option);
+                            });
+                        }
+
+                        select.value = row[field];
+                        td.appendChild(select);
+                    } else {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = row[field];
+                        input.oninput = (e) => updateRow(index, field, e.target.value);
+                        td.appendChild(input);
+                    }
                     tr.appendChild(td);
                 });
 
@@ -178,6 +252,7 @@
                 const tdMoveUp = document.createElement('td');
                 const btnMoveUp = document.createElement('button');
                 btnMoveUp.textContent = 'Opp';
+                btnMoveUp.onclick = () => moveRow(index, 'up');
                 tdMoveUp.appendChild(btnMoveUp);
                 tr.appendChild(tdMoveUp);
 
@@ -185,6 +260,7 @@
                 const tdMoveDown = document.createElement('td');
                 const btnMoveDown = document.createElement('button');
                 btnMoveDown.textContent = 'Ned';
+                btnMoveDown.onclick = () => moveRow(index, 'down');
                 tdMoveDown.appendChild(btnMoveDown);
                 tr.appendChild(tdMoveDown);
 
@@ -192,6 +268,7 @@
                 const tdDelete = document.createElement('td');
                 const btnDelete = document.createElement('button');
                 btnDelete.textContent = 'Slett';
+                btnDelete.onclick = () => deleteRow(index);
                 tdDelete.appendChild(btnDelete);
                 tr.appendChild(tdDelete);
 
@@ -199,7 +276,7 @@
             });
         }
 
-        fetchData(); // Hent data når siden lastes
+        renderTable();
     </script>
 </body>
 </html>
