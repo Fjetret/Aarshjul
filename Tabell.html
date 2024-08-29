@@ -2,121 +2,94 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Administrasjonsside</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrer Årshjulet</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-family: Arial, sans-serif;
+            margin: 20px;
         }
-        .back-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            font-size: 0.8em;
-            cursor: pointer;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 3px;
-        }
+
         table {
             width: 60%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            font-size: 0.9em; /* Mindre tekststørrelse for mer kompakt utseende */
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 0.9em;
         }
+
         th, td {
             border: 1px solid #ddd;
-            padding: 4px 6px; /* Mindre polstring i cellene */
+            padding: 4px 6px;
             text-align: center;
         }
+
         th {
             background-color: #f2f2f2;
         }
+
         th.month {
-            width: 7%; /* Juster bredde for Måned-kolonnen */
+            width: 7%;
         }
+
         th.type {
-            width: 7%; /* Juster bredde for Type-kolonnen */
+            width: 7%;
         }
+
         th.activity {
-            width: 10%; /* Juster bredde for Aktiviteter-kolonnen */
+            width: 10%;
         }
+
         th.link {
-            width: 10%; /* Juster bredde for Link-kolonnen */
+            width: 10%;
         }
+
         th.move {
-            width: 5%; /* Juster bredde for Flytt opp/ned-kolonnene */
+            width: 5%;
         }
+
         th.delete {
-            width: 5%; /* Juster bredde for Slett-kolonnen */
+            width: 5%;
         }
+
         select, input {
-            font-size: 0.9em; /* Mindre tekststørrelse i input-felt og dropdowns */
-            padding: 2px 4px; /* Mindre polstring i input-felt */
+            font-size: 0.9em;
+            padding: 2px 4px;
         }
+
         button {
-            padding: 3px 6px; /* Mindre knapper for å gjøre tabellen mer kompakt */
+            padding: 3px 6px;
             font-size: 0.85em;
             cursor: pointer;
         }
+
         .add-row-container {
-            margin-bottom: 10px; /* Litt mellomrom mellom knapp og tabell */
-            width: 60%;
-            display: flex;
-            justify-content: space-between;
+            margin-bottom: 10px;
         }
-        .add-row-container select.month-select {
-            width: 15%; /* Juster bredde for Måned dropdown */
+
+        .edit-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.85em;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
         }
-        .add-row-container select.type-select {
-            width: 15%; /* Juster bredde for Type dropdown */
-        }
-        .add-row-container input.activity-input {
-            width: 25%; /* Juster bredde for Aktiviteter input */
-        }
-        .add-row-container input.link-input {
-            width: 25%; /* Juster bredde for Link input */
-        }
-        .add-row-container button.add-btn {
-            width: 15%; /* Juster bredde for Legg til knapp */
-            font-size: 0.9em; /* Juster tekststørrelse for Legg til knapp */
-            padding: 5px 10px; /* Juster polstring for Legg til knapp */
-        }
+
     </style>
 </head>
 <body>
+    <button class="edit-button" onclick="goToYearWheel()">Årshjul</button>
     <h1>Administrer Årshjulet</h1>
-    
+
     <div class="add-row-container">
-        <select id="newMonth" class="month-select">
-            <option value="" disabled selected>Måned</option>
-            <option value="Januar">Januar</option>
-            <option value="Februar">Februar</option>
-            <option value="Mars">Mars</option>
-            <option value="April">April</option>
-            <option value="Mai">Mai</option>
-            <option value="Juni">Juni</option>
-            <option value="Juli">Juli</option>
-            <option value="August">August</option>
-            <option value="September">September</option>
-            <option value="Oktober">Oktober</option>
-            <option value="November">November</option>
-            <option value="Desember">Desember</option>
-        </select>
-        <select id="newType" class="type-select">
-            <option value="" disabled selected>Type</option>
-            <option value="Vikar">Vikar</option>
-            <option value="Kunde">Kunde</option>
-        </select>
-        <input type="text" id="newActivity" class="activity-input" placeholder="Aktiviteter">
-        <input type="text" id="newLink" class="link-input" placeholder="Link">
-        <button class="add-btn" onclick="addRow()">Legg til</button>
+        <button onclick="addRow()">Legg til rad</button>
     </div>
 
     <table id="adminTable">
@@ -126,8 +99,6 @@
                 <th class="type">Type</th>
                 <th class="activity">Aktiviteter</th>
                 <th class="link">Link</th>
-                <th class="move">Flytt opp</th>
-                <th class="move">Flytt ned</th>
                 <th class="delete">Slett</th>
             </tr>
         </thead>
@@ -136,147 +107,103 @@
         </tbody>
     </table>
 
-    <!-- Tilbake til Årshjul-knapp -->
-    <button class="back-button" onclick="window.location.href='index.html'">Årshjul</button>
-
     <script>
-        let tableData = JSON.parse(localStorage.getItem('yearWheelData')) || [];
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxbCdUB_1VqP_RWvgQcG7y5sGjDTzXrkNIjyW5tAfS2TOEI1HnWGL8_o72-QPaJPC_1zA/exec';
+        let data = [];
 
-        function saveData() {
-            localStorage.setItem('yearWheelData', JSON.stringify(tableData));
-        }
-
-        function moveRow(index, direction) {
-            if (direction === 'up' && index > 0) {
-                [tableData[index], tableData[index - 1]] = [tableData[index - 1], tableData[index]];
-            } else if (direction === 'down' && index < tableData.length - 1) {
-                [tableData[index], tableData[index + 1]] = [tableData[index + 1], tableData[index]];
+        // Hente data fra Google Sheets
+        async function fetchData() {
+            try {
+                const response = await fetch(scriptURL);
+                data = await response.json();
+                updateTable();
+            } catch (error) {
+                console.error('Feil ved henting av data:', error);
             }
-            saveData();
-            renderTable();
         }
 
-        function deleteRow(index) {
-            tableData.splice(index, 1);
-            saveData();
-            renderTable();
+        // Lagring av data til Google Sheets
+        async function saveData() {
+            try {
+                await fetch(scriptURL, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                });
+                console.log('Data lagret:', data);
+            } catch (error) {
+                console.error('Feil ved lagring av data:', error);
+            }
         }
 
         function addRow() {
-            const month = document.getElementById('newMonth').value;
-            const type = document.getElementById('newType').value;
-            const activity = document.getElementById('newActivity').value;
-            const link = document.getElementById('newLink').value;
-
-            if (month && type && activity) {
-                tableData.push({ month, type, activity, link });
-                sortTableData();
-                saveData();
-                clearNewRowInputs();
-                renderTable();
-            } else {
-                alert('Vennligst fyll ut alle feltene.');
-            }
-        }
-
-        function sortTableData() {
-            const monthOrder = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'];
-            tableData.sort((a, b) => {
-                const monthDiff = monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
-                if (monthDiff !== 0) return monthDiff;
-
-                // Sorter slik at "Vikar" kommer før "Kunde"
-                if (a.type === 'Vikar' && b.type === 'Kunde') return -1;
-                if (a.type === 'Kunde' && b.type === 'Vikar') return 1;
-                return 0;
-            });
-        }
-
-        function clearNewRowInputs() {
-            document.getElementById('newMonth').value = '';
-            document.getElementById('newType').value = '';
-            document.getElementById('newActivity').value = '';
-            document.getElementById('newLink').value = '';
-        }
-
-        function updateRow(index, field, value) {
-            tableData[index][field] = value;
+            data.push(['Januar', 'Vikar', '', '']);
+            updateTable();
             saveData();
         }
 
-        function renderTable() {
-            const tbody = document.querySelector("#adminTable tbody");
-            tbody.innerHTML = '';
+        function updateTable() {
+            const tableBody = document.querySelector('#adminTable tbody');
+            tableBody.innerHTML = '';
 
-            tableData.forEach((row, index) => {
+            data.forEach((row, index) => {
                 const tr = document.createElement('tr');
 
-                Object.keys(row).forEach((field) => {
-                    const td = document.createElement('td');
-                    if (field === 'month' || field === 'type') {
-                        const select = document.createElement('select');
-                        select.value = row[field];
-                        select.onchange = (e) => updateRow(index, field, e.target.value);
+                tr.innerHTML = `
+                    <td>
+                        <select class="month">
+                            ${['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'].map(
+                                month => `<option value="${month}" ${month === row[0] ? 'selected' : ''}>${month}</option>`
+                            ).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="type">
+                            <option value="Vikar" ${row[1] === 'Vikar' ? 'selected' : ''}>Vikar</option>
+                            <option value="Kunde" ${row[1] === 'Kunde' ? 'selected' : ''}>Kunde</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="activity" value="${row[2]}"></td>
+                    <td><input type="text" class="link" value="${row[3]}"></td>
+                    <td><button class="deleteRow">Slett</button></td>
+                `;
 
-                        if (field === 'month') {
-                            const months = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'];
-                            months.forEach(month => {
-                                const option = document.createElement('option');
-                                option.value = month;
-                                option.textContent = month;
-                                select.appendChild(option);
-                            });
-                        } else if (field === 'type') {
-                            const types = ['Vikar', 'Kunde'];
-                            types.forEach(type => {
-                                const option = document.createElement('option');
-                                option.value = type;
-                                option.textContent = type;
-                                select.appendChild(option);
-                            });
-                        }
-
-                        select.value = row[field];
-                        td.appendChild(select);
-                    } else {
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.value = row[field];
-                        input.oninput = (e) => updateRow(index, field, e.target.value);
-                        td.appendChild(input);
-                    }
-                    tr.appendChild(td);
+                tr.querySelector('.deleteRow').addEventListener('click', () => {
+                    data.splice(index, 1);
+                    updateTable();
+                    saveData();
                 });
 
-                // Flytt opp-knapp
-                const tdMoveUp = document.createElement('td');
-                const btnMoveUp = document.createElement('button');
-                btnMoveUp.textContent = 'Opp';
-                btnMoveUp.onclick = () => moveRow(index, 'up');
-                tdMoveUp.appendChild(btnMoveUp);
-                tr.appendChild(tdMoveUp);
+                tr.querySelector('.month').addEventListener('change', (e) => {
+                    data[index][0] = e.target.value;
+                    saveData();
+                });
 
-                // Flytt ned-knapp
-                const tdMoveDown = document.createElement('td');
-                const btnMoveDown = document.createElement('button');
-                btnMoveDown.textContent = 'Ned';
-                btnMoveDown.onclick = () => moveRow(index, 'down');
-                tdMoveDown.appendChild(btnMoveDown);
-                tr.appendChild(tdMoveDown);
+                tr.querySelector('.type').addEventListener('change', (e) => {
+                    data[index][1] = e.target.value;
+                    saveData();
+                });
 
-                // Slett-knapp
-                const tdDelete = document.createElement('td');
-                const btnDelete = document.createElement('button');
-                btnDelete.textContent = 'Slett';
-                btnDelete.onclick = () => deleteRow(index);
-                tdDelete.appendChild(btnDelete);
-                tr.appendChild(tdDelete);
+                tr.querySelector('.activity').addEventListener('input', (e) => {
+                    data[index][2] = e.target.value;
+                    saveData();
+                });
 
-                tbody.appendChild(tr);
+                tr.querySelector('.link').addEventListener('input', (e) => {
+                    data[index][3] = e.target.value;
+                    saveData();
+                });
+
+                tableBody.appendChild(tr);
             });
         }
 
-        renderTable();
+        // Hente data når siden lastes
+        fetchData();
+
+        // Gå tilbake til årshjulet
+        function goToYearWheel() {
+            window.location.href = 'index.html';
+        }
     </script>
 </body>
 </html>
