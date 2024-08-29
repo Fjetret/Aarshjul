@@ -1,0 +1,68 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#yearWheel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Fyller hele skjermen i høyden */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+button {
+    padding: 10px 15px;
+    margin-top: 10px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+svg {
+    display: block;
+    margin: auto;
+}
+
+.arc1 text, .arc2 text, .arc3 text {
+    font-size: 12px;
+    fill: #000;
+    text-anchor: middle;
+}
+
+.arc1 path, .arc2 path, .arc3 path {
+    stroke: #fff;
+    stroke-width: 1px;
+}

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Årshjul</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+        svg {
+            width: 800px;
+            height: 800px;
+            transform: rotate(360deg); /* Roter hjulet for å få rad 1 øverst til høyre */
+            background-color: transparent;
+        }
+        .slice text {
+            font-size: 0.0025em;
+            fill: white;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .slice path {
+            transition: fill 0.3s ease; /* Legg til en myk overgang når fargen endres */
+        }
+    </style>
+</head>
+<body>
+    <h1>Årshjul</h1>
+    <svg id="yearWheel" viewBox="-1 -1 2 2" xmlns="http://www.w3.org/2000/svg"></svg>
+
+    <script>
+        const data = JSON.parse(localStorage.getItem('yearWheelData')) || [];
+
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        }
+
+        function describeArc(x, y, innerRadius, outerRadius, startAngle, endAngle) {
+            const startInner = polarToCartesian(x, y, innerRadius, endAngle);
+            const endInner = polarToCartesian(x, y, innerRadius, startAngle);
+            const startOuter = polarToCartesian(x, y, outerRadius, endAngle);
+            const endOuter = polarToCartesian(x, y, outerRadius, startAngle);
+
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+            const pathData = [
+                "M", startInner.x, startInner.y,
+                "A", innerRadius, innerRadius, 0, largeArcFlag, 0, endInner.x, endInner.y,
+                "L", endOuter.x, endOuter.y,
+                "A", outerRadius, outerRadius, 0, largeArcFlag, 1, startOuter.x, startOuter.y,
+                "Z"
+            ].join(" ");
+
+            return pathData;
+        }
+
+        function createSlice(innerRadius, outerRadius, startAngle, endAngle, color, text, link = null, sliceId = '') {
+            const sliceGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            sliceGroup.classList.add("slice");
+
+            if (sliceId) {
+                sliceGroup.dataset.sliceId = sliceId; // Unikt ID for å knytte nivå 3 til eksisterende nivå 2-flis
+            }
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const pathData = describeArc(0, 0, innerRadius, outerRadius, startAngle, endAngle);
+            path.setAttribute("d", pathData);
+            path.setAttribute("fill", color);
+            path.setAttribute("stroke", "white");
+            path.setAttribute("stroke-width", "0.005");
+            sliceGroup.appendChild(path);
+
+            const midAngle = (startAngle + endAngle) / 2;
+            const textPos = polarToCartesian(0, 0, (innerRadius + outerRadius) / 2, midAngle);
+
+            const textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textElement.setAttribute("x", textPos.x);
+            textElement.setAttribute("y", textPos.y);
+
+            let rotationAngle;
+            if (midAngle > 0 && midAngle < 180) {
+                rotationAngle = midAngle + 270; // Venstre halvdel
+            } else {
+                rotationAngle = midAngle + 90; // Høyre halvdel
+            }
+
+            textElement.setAttribute("transform", `rotate(${rotationAngle}, ${textPos.x}, ${textPos.y})`);
+            textElement.textContent = text;
+            textElement.style.fill = "white";
+            textElement.style.fontSize = "0.0025em";
+            textElement.style.textAnchor = "middle";
+            textElement.style.dominantBaseline = "middle";
+            sliceGroup.appendChild(textElement);
+
+            if (link) {
+                sliceGroup.style.cursor = "pointer";
+                sliceGroup.addEventListener("click", () => {
+                    window.open(link, '_blank');
+                });
+            }
+
+            // Event listeners for mouseover og mouseout
+            sliceGroup.addEventListener("mouseover", handleMouseOver);
+            sliceGroup.addEventListener("mouseout", handleMouseOut);
+
+            return sliceGroup;
+        }
+
+        function handleMouseOver(event) {
+            const sliceId = event.currentTarget.dataset.sliceId;
+            const allSlices = document.querySelectorAll(".slice");
+
+            allSlices.forEach((slice) => {
+                const path = slice.querySelector("path");
+
+                // Sjekker om sliceId matcher nøyaktig eller om den er en overordnet eller underordnet del
+                if (
+                    slice.dataset.sliceId === sliceId || // Den eksakte flisen
+                    (slice.dataset.sliceId.startsWith(sliceId) && slice.dataset.sliceId.split('-').length > sliceId.split('-').length) || // Overordnede fliser (nivå 1 og 2)
+                    (sliceId.startsWith(slice.dataset.sliceId) && sliceId.split('-').length > slice.dataset.sliceId.split('-').length) // Underordnede fliser (nivå 3)
+                ) {
+                    path.setAttribute("fill-opacity", "1");
+                } else {
+                    path.setAttribute("fill-opacity", "0.3"); // Duser ut ikke-relaterte fliser
+                }
+            });
+        }
+
+        function handleMouseOut() {
+            const allSlices = document.querySelectorAll(".slice path");
+            allSlices.forEach((path) => {
+                path.setAttribute("fill-opacity", "1");
+            });
+        }
+
+        function generateYearWheel() {
+            const svg = document.getElementById('yearWheel');
+            svg.innerHTML = '';
+            const uniqueMonths = [...new Set(data.map(item => item.month))];
+            const totalSegments = uniqueMonths.length;
+            const anglePerSegment = 360 / totalSegments;
+
+            uniqueMonths.forEach((month, index) => {
+                const monthData = data.filter(item => item.month === month);
+                const startAngle = index * anglePerSegment;
+                const endAngle = startAngle + anglePerSegment;
+                const color = `hsl(${index * 30}, 70%, 50%)`;
+
+                // Level 1 (Month)
+                svg.appendChild(createSlice(0.13, 0.38, startAngle, endAngle, color, month, null, `month-${month}`));
+
+                // Nivå 2
+                const typeGroups = {};
+                monthData.forEach(item => {
+                    if (!typeGroups[item.type]) {
+                        typeGroups[item.type] = [];
+                    }
+                    typeGroups[item.type].push(item);
+                });
+
+                Object.keys(typeGroups).forEach((type, i) => {
+                    const numTypes = Object.keys(typeGroups).length;
+                    const typeStartAngle = startAngle + (i * anglePerSegment) / numTypes;
+                    const typeEndAngle = typeStartAngle + (anglePerSegment / numTypes);
+
+                    svg.appendChild(createSlice(0.38, 0.62, typeStartAngle, typeEndAngle, color, type, null, `month-${month}-type-${type}`));
+
+                    // Nivå 3
+                    typeGroups[type].forEach((item, j) => {
+                        const numActivities = typeGroups[type].length;
+                        const activityStartAngle = typeStartAngle + (j * (typeEndAngle - typeStartAngle)) / numActivities;
+                        const activityEndAngle = activityStartAngle + (typeEndAngle - typeStartAngle) / numActivities;
+
+                        svg.appendChild(createSlice(0.62, 0.99, activityStartAngle, activityEndAngle, color, item.activity, item.link, `month-${month}-type-${type}-${item.activity}`));
+                    });
+                });
+            });
+        }
+
+        generateYearWheel();
+    </script>
+</body>
+</html>
