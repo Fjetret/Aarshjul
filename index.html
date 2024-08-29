@@ -4,31 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Årshjul</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        .edit-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            font-size: 0.8em;
-            cursor: pointer;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 3px;
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+        svg {
+            width: 800px;
+            height: 800px;
+            transform: rotate(360deg); /* Roter hjulet for å få rad 1 øverst til høyre */
+            background-color: transparent;
+        }
+        .slice text {
+            font-size: 0.0025em;
+            fill: white;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .slice path {
+            transition: fill 0.3s ease; /* Legg til en myk overgang når fargen endres */
         }
     </style>
 </head>
 <body>
     <svg id="yearWheel" viewBox="-1 -1 2 2" xmlns="http://www.w3.org/2000/svg"></svg>
 
-    <!-- Rediger-knapp -->
     <button class="edit-button" onclick="promptPassword()">Rediger</button>
 
     <script>
-        // Data hentes fra lokal lagring
-        const data = JSON.parse(localStorage.getItem('yearWheelData')) || [];
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxbCdUB_1VqP_RWvgQcG7y5sGjDTzXrkNIjyW5tAfS2TOEI1HnWGL8_o72-QPaJPC_1zA/exec';
+        let data = [];
+
+        // Hente data fra Google Sheets
+        async function fetchData() {
+            try {
+                const response = await fetch(scriptURL);
+                data = await response.json();
+                generateYearWheel();
+            } catch (error) {
+                console.error('Feil ved henting av data:', error);
+            }
+        }
 
         function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
             const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
@@ -139,12 +158,12 @@
         function generateYearWheel() {
             const svg = document.getElementById('yearWheel');
             svg.innerHTML = '';
-            const uniqueMonths = [...new Set(data.map(item => item.month))];
+            const uniqueMonths = [...new Set(data.map(item => item[0]))];
             const totalSegments = uniqueMonths.length;
             const anglePerSegment = 360 / totalSegments;
 
             uniqueMonths.forEach((month, index) => {
-                const monthData = data.filter(item => item.month === month);
+                const monthData = data.filter(item => item[0] === month);
                 const startAngle = index * anglePerSegment;
                 const endAngle = startAngle + anglePerSegment;
                 const color = `hsl(${index * 30}, 70%, 50%)`;
@@ -155,10 +174,10 @@
                 // Nivå 2
                 const typeGroups = {};
                 monthData.forEach(item => {
-                    if (!typeGroups[item.type]) {
-                        typeGroups[item.type] = [];
+                    if (!typeGroups[item[1]]) {
+                        typeGroups[item[1]] = [];
                     }
-                    typeGroups[item.type].push(item);
+                    typeGroups[item[1]].push(item);
                 });
 
                 Object.keys(typeGroups).forEach((type, i) => {
@@ -174,22 +193,33 @@
                         const activityStartAngle = typeStartAngle + (j * (typeEndAngle - typeStartAngle)) / numActivities;
                         const activityEndAngle = activityStartAngle + (typeEndAngle - typeStartAngle) / numActivities;
 
-                        svg.appendChild(createSlice(0.62, 0.99, activityStartAngle, activityEndAngle, color, item.activity, item.link, `month-${month}-type-${type}-${item.activity}`));
+                        svg.appendChild(createSlice(0.62, 0.99, activityStartAngle, activityEndAngle, color, item[2], item[3], `month-${month}-type-${type}-${item[2]}`));
                     });
                 });
             });
         }
 
-        generateYearWheel();
+        // Hent data fra Google Sheets når siden lastes
+        fetchData();
 
-        // Funksjon for å be om passord
+        // Passordbeskyttet knapp for redigering
         function promptPassword() {
             const password = prompt("Skriv inn passord:");
-            if (password === "Sommer2021") {
+            const correctPasswordHash = -1374162455;
+            if (hashPassword(password) === correctPasswordHash) {
                 window.location.href = "Tabell.html";
             } else {
                 alert("Feil passord");
             }
+        }
+
+        // Enkel hashing av passord
+        function hashPassword(password) {
+            let hash = 0;
+            for (let i = 0; i < password.length; i++) {
+                hash = Math.imul(31, hash) + password.charCodeAt(i) | 0;
+            }
+            return hash;
         }
     </script>
 </body>
