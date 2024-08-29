@@ -27,6 +27,18 @@
         .slice path {
             transition: fill 0.3s ease; /* Legg til en myk overgang når fargen endres */
         }
+        .edit-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.85em;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -205,7 +217,7 @@
         // Passordbeskyttet knapp for redigering
         function promptPassword() {
             const password = prompt("Skriv inn passord:");
-            const correctPasswordHash = -1374162455;
+            const correctPasswordHash = -1374162455; // Hash for "Sommer2021"
             if (hashPassword(password) === correctPasswordHash) {
                 window.location.href = "Tabell.html";
             } else {
