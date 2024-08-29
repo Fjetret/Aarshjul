@@ -140,10 +140,31 @@
     <button class="back-button" onclick="window.location.href='index.html'">Årshjul</button>
 
     <script>
-        let tableData = JSON.parse(localStorage.getItem('yearWheelData')) || [];
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxbCdUB_1VqP_RWvgQcG7y5sGjDTzXrkNIjyW5tAfS2TOEI1HnWGL8_o72-QPaJPC_1zA/exec';
+        let tableData = [];
 
-        function saveData() {
-            localStorage.setItem('yearWheelData', JSON.stringify(tableData));
+        // Hente data fra Google Sheets
+        async function fetchData() {
+            try {
+                const response = await fetch(scriptURL);
+                tableData = await response.json();
+                renderTable();
+            } catch (error) {
+                console.error('Feil ved henting av data:', error);
+            }
+        }
+
+        // Lagring av data til Google Sheets
+        async function saveData() {
+            try {
+                await fetch(scriptURL, {
+                    method: 'POST',
+                    body: JSON.stringify(tableData),
+                });
+                console.log('Data lagret:', tableData);
+            } catch (error) {
+                console.error('Feil ved lagring av data:', error);
+            }
         }
 
         function moveRow(index, direction) {
@@ -169,7 +190,7 @@
             const link = document.getElementById('newLink').value;
 
             if (month && type && activity) {
-                tableData.push({ month, type, activity, link });
+                tableData.push([month, type, activity, link]);
                 sortTableData();
                 saveData();
                 clearNewRowInputs();
@@ -182,12 +203,12 @@
         function sortTableData() {
             const monthOrder = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'];
             tableData.sort((a, b) => {
-                const monthDiff = monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
+                const monthDiff = monthOrder.indexOf(a[0]) - monthOrder.indexOf(b[0]);
                 if (monthDiff !== 0) return monthDiff;
 
                 // Sorter slik at "Vikar" kommer før "Kunde"
-                if (a.type === 'Vikar' && b.type === 'Kunde') return -1;
-                if (a.type === 'Kunde' && b.type === 'Vikar') return 1;
+                if (a[1] === 'Vikar' && b[1] === 'Kunde') return -1;
+                if (a[1] === 'Kunde' && b[1] === 'Vikar') return 1;
                 return 0;
             });
         }
@@ -211,14 +232,14 @@
             tableData.forEach((row, index) => {
                 const tr = document.createElement('tr');
 
-                Object.keys(row).forEach((field) => {
+                row.forEach((value, fieldIndex) => {
                     const td = document.createElement('td');
-                    if (field === 'month' || field === 'type') {
+                    if (fieldIndex === 0 || fieldIndex === 1) {
                         const select = document.createElement('select');
-                        select.value = row[field];
-                        select.onchange = (e) => updateRow(index, field, e.target.value);
+                        select.value = value;
+                        select.onchange = (e) => updateRow(index, fieldIndex, e.target.value);
 
-                        if (field === 'month') {
+                        if (fieldIndex === 0) {
                             const months = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'];
                             months.forEach(month => {
                                 const option = document.createElement('option');
@@ -226,7 +247,7 @@
                                 option.textContent = month;
                                 select.appendChild(option);
                             });
-                        } else if (field === 'type') {
+                        } else if (fieldIndex === 1) {
                             const types = ['Vikar', 'Kunde'];
                             types.forEach(type => {
                                 const option = document.createElement('option');
@@ -236,13 +257,13 @@
                             });
                         }
 
-                        select.value = row[field];
+                        select.value = value;
                         td.appendChild(select);
                     } else {
                         const input = document.createElement('input');
                         input.type = 'text';
-                        input.value = row[field];
-                        input.oninput = (e) => updateRow(index, field, e.target.value);
+                        input.value = value;
+                        input.oninput = (e) => updateRow(index, fieldIndex, e.target.value);
                         td.appendChild(input);
                     }
                     tr.appendChild(td);
@@ -276,7 +297,7 @@
             });
         }
 
-        renderTable();
+        fetchData(); // Hent data ved oppstart
     </script>
 </body>
 </html>
