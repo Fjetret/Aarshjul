@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Index: <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,19 +27,8 @@
     <button class="edit-button" onclick="promptPassword()">Rediger</button>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxbCdUB_1VqP_RWvgQcG7y5sGjDTzXrkNIjyW5tAfS2TOEI1HnWGL8_o72-QPaJPC_1zA/exec';
-        let data = [];
-
-        // Hente data fra Google Sheets
-        async function fetchData() {
-            try {
-                const response = await fetch(scriptURL);
-                data = await response.json();
-                generateYearWheel();
-            } catch (error) {
-                console.error('Feil ved henting av data:', error);
-            }
-        }
+        // Data hentes fra lokal lagring
+        const data = JSON.parse(localStorage.getItem('yearWheelData')) || [];
 
         function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
             const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
@@ -98,7 +87,7 @@
                 rotationAngle = midAngle + 90; // Høyre halvdel
             }
 
-            textElement.setAttribute("transform", `rotate(${rotationAngle}, ${textPos.x}, ${textPos.y})`);
+            textElement.setAttribute("transform", rotate(${rotationAngle}, ${textPos.x}, ${textPos.y}));
             textElement.textContent = text;
             textElement.style.fill = "white";
             textElement.style.fontSize = "0.0025em";
@@ -150,26 +139,26 @@
         function generateYearWheel() {
             const svg = document.getElementById('yearWheel');
             svg.innerHTML = '';
-            const uniqueMonths = [...new Set(data.map(item => item[0]))];
+            const uniqueMonths = [...new Set(data.map(item => item.month))];
             const totalSegments = uniqueMonths.length;
             const anglePerSegment = 360 / totalSegments;
 
             uniqueMonths.forEach((month, index) => {
-                const monthData = data.filter(item => item[0] === month);
+                const monthData = data.filter(item => item.month === month);
                 const startAngle = index * anglePerSegment;
                 const endAngle = startAngle + anglePerSegment;
-                const color = `hsl(${index * 30}, 70%, 50%)`;
+                const color = hsl(${index * 30}, 70%, 50%);
 
                 // Level 1 (Month)
-                svg.appendChild(createSlice(0.13, 0.38, startAngle, endAngle, color, month, null, `month-${month}`));
+                svg.appendChild(createSlice(0.13, 0.38, startAngle, endAngle, color, month, null, month-${month}));
 
                 // Nivå 2
                 const typeGroups = {};
                 monthData.forEach(item => {
-                    if (!typeGroups[item[1]]) {
-                        typeGroups[item[1]] = [];
+                    if (!typeGroups[item.type]) {
+                        typeGroups[item.type] = [];
                     }
-                    typeGroups[item[1]].push(item);
+                    typeGroups[item.type].push(item);
                 });
 
                 Object.keys(typeGroups).forEach((type, i) => {
@@ -177,7 +166,7 @@
                     const typeStartAngle = startAngle + (i * anglePerSegment) / numTypes;
                     const typeEndAngle = typeStartAngle + (anglePerSegment / numTypes);
 
-                    svg.appendChild(createSlice(0.38, 0.62, typeStartAngle, typeEndAngle, color, type, null, `month-${month}-type-${type}`));
+                    svg.appendChild(createSlice(0.38, 0.62, typeStartAngle, typeEndAngle, color, type, null, month-${month}-type-${type}));
 
                     // Nivå 3
                     typeGroups[type].forEach((item, j) => {
@@ -185,13 +174,13 @@
                         const activityStartAngle = typeStartAngle + (j * (typeEndAngle - typeStartAngle)) / numActivities;
                         const activityEndAngle = activityStartAngle + (typeEndAngle - typeStartAngle) / numActivities;
 
-                        svg.appendChild(createSlice(0.62, 0.99, activityStartAngle, activityEndAngle, color, item[2], item[3], `month-${month}-type-${type}-${item[2]}`));
+                        svg.appendChild(createSlice(0.62, 0.99, activityStartAngle, activityEndAngle, color, item.activity, item.link, month-${month}-type-${type}-${item.activity}));
                     });
                 });
             });
         }
 
-        fetchData();
+        generateYearWheel();
 
         // Funksjon for å be om passord
         function promptPassword() {
